@@ -1,6 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { type NextRequest, NextResponse } from "next/server";
+import { type DocumentTemplate } from "@/types";
 
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_NUTRIENT_API_URL || "https://api.xtractflow.com";
@@ -184,7 +185,7 @@ const INVOICE_TEMPLATE = {
 };
 
 // Get predefined templates from the API
-async function getPredefinedTemplates() {
+async function getPredefinedTemplates(): Promise<DocumentTemplate | null> {
 	console.log("📋 Fetching predefined templates...");
 
 	try {
@@ -204,17 +205,17 @@ async function getPredefinedTemplates() {
 			return null;
 		}
 
-		const templates = await response.json();
+		const templates: DocumentTemplate[] = await response.json();
 		console.log("✅ Fetched predefined templates:", templates.length);
 		
 		// Look for invoice-related templates
-		const invoiceTemplates = templates.filter((t: any) => 
+		const invoiceTemplates = templates.filter((t: DocumentTemplate) => 
 			t.name.toLowerCase().includes('invoice') || 
 			t.identifier.toLowerCase().includes('invoice')
 		);
 		
 		if (invoiceTemplates.length > 0) {
-			console.log("🎯 Found predefined invoice templates:", invoiceTemplates.map((t: any) => t.name));
+			console.log("🎯 Found predefined invoice templates:", invoiceTemplates.map((t: DocumentTemplate) => t.name));
 			return invoiceTemplates[0]; // Use the first invoice template found
 		}
 		

@@ -2,6 +2,25 @@
 
 import { useEffect, useRef, useMemo, useState } from "react";
 
+// Type declarations for NutrientViewer SDK
+type NutrientViewerWindow = Window & {
+	NutrientViewer?: {
+		load: (config: unknown) => Promise<unknown>;
+		unload?: (container: HTMLElement) => void;
+		FormFieldValue?: new (config: { name: string; value: string }) => unknown;
+		FormFields?: {
+			TextFormField: new (...args: unknown[]) => unknown;
+			CheckBoxFormField: new (...args: unknown[]) => unknown;
+			RadioButtonFormField: new (...args: unknown[]) => unknown;
+			ComboBoxFormField: new (...args: unknown[]) => unknown;
+			ListBoxFormField: new (...args: unknown[]) => unknown;
+			ButtonFormField: new (...args: unknown[]) => unknown;
+			SignatureFormField: new (...args: unknown[]) => unknown;
+		};
+	} & Record<string, unknown>;
+};
+
+
 interface FormField {
 	name: string;
 	type: string;
@@ -55,7 +74,7 @@ export default function Viewer({
 		instance: ViewerInstance,
 		fieldData: FieldData[],
 	) => {
-		const { NutrientViewer } = window;
+		const { NutrientViewer } = window as NutrientViewerWindow;
 		if (!NutrientViewer?.FormFieldValue) {
 			console.error("❌ NutrientViewer.FormFieldValue not available");
 			return;
@@ -88,7 +107,7 @@ export default function Viewer({
 		setError(null);
 		
 		// Check for missing pay stub
-		if (document.includes('joseph-sample-sample-pay-stub.pdf')) {
+		if (typeof document === 'string' && document.includes('joseph-sample-sample-pay-stub.pdf')) {
 			setIsLoading(false);
 			setError("Document Unavailable");
 			return;
@@ -98,7 +117,7 @@ export default function Viewer({
 		
 		const tryLoad = () => {
 			const container = containerRef.current;
-			const { NutrientViewer } = window;
+			const { NutrientViewer } = window as NutrientViewerWindow;
 			
 			console.log("🔍 Trying to load - Container:", !!container, "NutrientViewer:", !!NutrientViewer);
 			
@@ -112,50 +131,56 @@ export default function Viewer({
 					? { ...baseConfig, toolbarItems: memoizedToolbarItems }
 					: baseConfig;
 
-				(NutrientViewer.load as any)(loadConfig).then(async (instance: any) => {
-					instanceRef.current = instance;
+				NutrientViewer.load(loadConfig).then(async (instance: unknown) => {
+					instanceRef.current = instance as ViewerInstance;
 					setIsLoading(false);
 					
 					try {
-						const formFields = await instance.getFormFields();
+						const formFields = await (instance as ViewerInstance).getFormFields() as unknown[];
 						console.log("📋 PDF Form Fields:", formFields);
 
 						const getFormFieldType = (formField: unknown) => {
-							const { NutrientViewer } = window;
+							const { NutrientViewer } = window as NutrientViewerWindow;
 							if (!NutrientViewer?.FormFields) return "Unknown";
 
-							if (formField instanceof NutrientViewer.FormFields.TextFormField)
-								return "Text Field";
-							if (formField instanceof NutrientViewer.FormFields.CheckBoxFormField)
-								return "Checkbox";
-							if (formField instanceof NutrientViewer.FormFields.RadioButtonFormField)
-								return "Radio Button";
-							if (formField instanceof NutrientViewer.FormFields.ComboBoxFormField)
-								return "Combo Box";
-							if (formField instanceof NutrientViewer.FormFields.ListBoxFormField)
-								return "List Box";
-							if (formField instanceof NutrientViewer.FormFields.ButtonFormField)
-								return "Button";
-							if (formField instanceof NutrientViewer.FormFields.SignatureFormField)
-								return "Signature";
+							try {
+								if (formField instanceof NutrientViewer.FormFields.TextFormField)
+									return "Text Field";
+								if (formField instanceof NutrientViewer.FormFields.CheckBoxFormField)
+									return "Checkbox";
+								if (formField instanceof NutrientViewer.FormFields.RadioButtonFormField)
+									return "Radio Button";
+								if (formField instanceof NutrientViewer.FormFields.ComboBoxFormField)
+									return "Combo Box";
+								if (formField instanceof NutrientViewer.FormFields.ListBoxFormField)
+									return "List Box";
+								if (formField instanceof NutrientViewer.FormFields.ButtonFormField)
+									return "Button";
+								if (formField instanceof NutrientViewer.FormFields.SignatureFormField)
+									return "Signature";
+							} catch {
+								// Ignore instanceof errors
+							}
 
 							return "Unknown";
 						};
 
 						const formFieldsArray: FormField[] = [];
-						formFields.forEach((formField: unknown) => {
-							const field = formField as {
-								name: string;
-								required: boolean;
-								value?: string;
-							};
-							formFieldsArray.push({
-								name: field.name,
-								type: getFormFieldType(formField),
-								required: field.required,
-								value: field.value || null,
+						if (Array.isArray(formFields)) {
+							formFields.forEach((formField: unknown) => {
+								const field = formField as {
+									name: string;
+									required: boolean;
+									value?: string;
+								};
+								formFieldsArray.push({
+									name: field.name,
+									type: getFormFieldType(formField),
+									required: field.required,
+									value: field.value || null,
+								});
 							});
-						});
+						}
 
 						if (onFormFieldsLoaded) {
 							onFormFieldsLoaded(formFieldsArray);
@@ -163,7 +188,7 @@ export default function Viewer({
 					} catch (error) {
 						console.error("❌ Error getting form fields:", error);
 					}
-				}).catch((error: any) => {
+				}).catch((error: Error) => {
 					setIsLoading(false);
 					console.error("❌ Error loading document:", error);
 					setError("Failed to load document. Please refresh the page and try again.");
@@ -180,9 +205,10 @@ export default function Viewer({
 			if (timeoutId) {
 				clearTimeout(timeoutId);
 			}
-			const { NutrientViewer } = window;
-			if (containerRef.current && NutrientViewer) {
-				NutrientViewer.unload(containerRef.current);
+			const container = containerRef.current;
+			const { NutrientViewer } = window as NutrientViewerWindow;
+			if (container && NutrientViewer && NutrientViewer.unload) {
+				NutrientViewer.unload(container);
 			}
 		};
 	}, [document, onFormFieldsLoaded, memoizedToolbarItems]);

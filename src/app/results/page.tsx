@@ -1,25 +1,16 @@
 "use client";
 
 import {
-	AlertCircle,
 	ArrowLeft,
-	CheckCircle,
 	Download,
 	FileText,
 	RefreshCw,
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
-import { INVOICE_COLLECTION } from "@/lib/constants";
 
-// Invoice collection information for display
-const COLLECTION_INFO = {
-	name: INVOICE_COLLECTION.name,
-	description: INVOICE_COLLECTION.description,
-	totalInvoices: INVOICE_COLLECTION.invoices.length,
-};
 
 interface ProcessedInvoice {
 	id: string;
@@ -57,14 +48,6 @@ interface ProcessingResult {
 	invoices: ProcessedInvoice[];
 }
 
-// Minimal toolbar configuration - moved outside component to prevent re-creation
-const MINIMAL_TOOLBAR_ITEMS = [
-	{ type: "zoom-out" },
-	{ type: "zoom-in" },
-	{ type: "zoom-mode" },
-	{ type: "search" },
-];
-
 // Removed complex processing steps - just show simple processing state
 
 function ResultsContent() {
@@ -74,14 +57,7 @@ function ResultsContent() {
 	const [processingLogs, setProcessingLogs] = useState<string[]>([]);
 	const [terminalRef, setTerminalRef] = useState<HTMLDivElement | null>(null);
 
-	// Dynamic invoice documents from the actual files
-	const [invoiceDocuments, setInvoiceDocuments] = useState<string[]>([]);
-	const [showDetailedResults, setShowDetailedResults] = useState(false);
-	const [showFormFields, setShowFormFields] = useState(false);
 	const [showJsonModal, setShowJsonModal] = useState(false);
-
-	// Use invoice collection info
-	const collectionInfo = COLLECTION_INFO;
 
 	const addLog = useCallback((message: string) => {
 		setProcessingLogs((prev) => [...prev, message]);
@@ -164,8 +140,7 @@ function ResultsContent() {
 				throw new Error('Failed to load invoice files');
 			}
 			
-			const documents = invoicesData.invoices.map((inv: any) => inv.filename);
-			setInvoiceDocuments(documents);
+			const documents = invoicesData.invoices.map((inv: { filename: string }) => inv.filename);
 			
 			addLog(`✅ Found ${documents.length} invoice files:`);
 			documents.forEach((filename: string) => {
@@ -227,40 +202,7 @@ function ResultsContent() {
 		processInvoiceCollection();
 	}, [processInvoiceCollection]);
 
-	// Simplified form field matching - not used in invoice processing
-	const matchFormFieldsWithData = useCallback(
-		(
-			fields: Array<{
-				name: string;
-				type: string;
-				required: boolean;
-				value: string | null;
-			}>,
-			extractedData: ProcessedInvoice[],
-		) => {
-			// Return fields as-is without matching for invoice processing
-			return fields.map((field) => ({
-				...field,
-				extractedValue: null,
-				hasMatch: false,
-			}));
-		},
-		[],
-	);
 
-
-	const getStatusIcon = (status: string) => {
-		switch (status) {
-			case "Valid":
-				return <CheckCircle className="h-4 w-4 text-green-500" />;
-			case "VerificationNeeded":
-				return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-			case "Undefined":
-				return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-			default:
-				return <FileText className="h-4 w-4 text-gray-400" />;
-		}
-	};
 
 	const formatFieldName = (fieldName: string) => {
 		return fieldName
@@ -365,98 +307,16 @@ function ResultsContent() {
 	if (!results) return null;
 
 	// Get all processed invoices for validation
-	const sourceInvoices = results.invoices || [];
+	// const sourceInvoices = results.invoices || [];
 
 	// Generate executive summary for invoice processing
-	const generateExecutiveSummary = () => {
-		const failedInvoices = sourceInvoices.filter(
-			(invoice) => invoice.status === "failed",
-		);
+	// const generateExecutiveSummary = () => {
+	//	const failedInvoices = sourceInvoices.filter(
+	//		(invoice) => invoice.status === "failed",
+	//	);
+	//	// ... rest of function commented out
+	// };
 
-		// Determine status: VALID, REVIEW REQUIRED, or INVALID
-		const hasFailedInvoices = failedInvoices.length > 0;
-		const hasMissingData = results.summary.missingFields > 0;
-		const hasVerificationNeeded = results.summary.verificationNeededFields > 0;
-
-		let status: string;
-		let isValid: boolean;
-
-		if (hasFailedInvoices || hasMissingData) {
-			status = "Invalid";
-			isValid = false;
-		} else if (hasVerificationNeeded) {
-			status = "Valid - Some Review Required";
-			isValid = false; // Not fully valid, needs review
-		} else {
-			status = "Valid";
-			isValid = true;
-		}
-
-		const missingData = [];
-
-		// Check for failed invoices
-		if (failedInvoices.length > 0) {
-			missingData.push(
-				`${failedInvoices.length} invoice${failedInvoices.length > 1 ? "s" : ""} failed to process: ${failedInvoices.map((inv) => inv.fileName).join(", ")}`,
-			);
-		}
-
-		// Check for verification needed fields
-		if (results.summary.verificationNeededFields > 0) {
-			missingData.push(
-				`${results.summary.verificationNeededFields} field${results.summary.verificationNeededFields > 1 ? "s" : ""} require verification`,
-			);
-		}
-
-		// Check for missing fields
-		if (results.summary.missingFields > 0) {
-			missingData.push(
-				`${results.summary.missingFields} field${results.summary.missingFields > 1 ? "s" : ""} could not be extracted`,
-			);
-		}
-
-		// Check for missing critical invoice fields
-		const criticalFields = ["vendorName", "invoiceNumber", "totalAmount", "invoiceDate"];
-		
-		sourceInvoices.forEach((invoice) => {
-			if (invoice.fields) {
-				const extractedFields = invoice.fields.map(f => f.fieldName);
-				const missingCriticalFields = criticalFields.filter(field => 
-					!extractedFields.includes(field) || 
-					invoice.fields?.find(f => f.fieldName === field && f.validationState === "Undefined")
-				);
-				
-				if (missingCriticalFields.length > 0) {
-					missingData.push(
-						`${invoice.fileName}: Missing critical fields: ${missingCriticalFields.join(", ")}`
-					);
-				}
-			}
-		});
-
-		return {
-			isValid,
-			status,
-			missingData,
-			recommendation:
-				status === "Valid"
-					? "All invoices processed successfully and ready for review."
-					: status === "Valid - Some Review Required"
-						? `Invoice data extracted successfully. ${results.summary.verificationNeededFields} field${results.summary.verificationNeededFields > 1 ? "s" : ""} require verification.`
-						: "Some invoices require additional review or reprocessing.",
-		};
-	};
-
-	const executiveSummary = generateExecutiveSummary();
-
-	// Find the first invoice PDF document for the Viewer
-	const firstInvoiceDoc = results.invoices && results.invoices.length > 0 
-		? results.invoices[0]
-		: null;
-
-	const pdfPath = firstInvoiceDoc
-		? `/documents/invoices/${firstInvoiceDoc.fileName}`
-		: null;
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -665,11 +525,13 @@ function ResultsContent() {
 														
 														// Among candidates, pick the one with the highest numerical value
 														// as it's likely the final total including taxes
-														field = candidateFields.reduce((highest, current) => {
-															const currentValue = parseFloat(current.value?.value?.replace(/[^\d.-]/g, '') || '0');
-															const highestValue = parseFloat(highest?.value?.value?.replace(/[^\d.-]/g, '') || '0');
-															return currentValue > highestValue ? current : highest;
-														}, null as any);
+														field = candidateFields.length > 0 
+															? candidateFields.reduce((highest, current) => {
+																	const currentValue = parseFloat(current.value?.value?.replace(/[^\d.-]/g, '') || '0');
+																	const highestValue = parseFloat(highest.value?.value?.replace(/[^\d.-]/g, '') || '0');
+																	return currentValue > highestValue ? current : highest;
+																})
+															: undefined;
 													} else {
 														// Regular matching logic for other fields
 														field = invoice.fields?.find(f => {

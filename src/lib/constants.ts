@@ -1,4 +1,4 @@
-import type { DocumentTemplate, InvoiceCollection, InvoiceMetadata } from "@/types";
+import type { DocumentTemplate, InvoiceCollection } from "@/types";
 
 // Document template definitions for invoices
 export const DOCUMENT_TEMPLATES: DocumentTemplate[] = [
