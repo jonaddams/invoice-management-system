@@ -473,7 +473,7 @@ function ResultsContent() {
 								) : invoice.fields && invoice.fields.length > 0 ? (
 									<div className="space-y-2">
 										{/* Key Invoice Fields */}
-										<div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+										<div className="grid grid-cols-2 md:grid-cols-5 gap-2">
 											{(() => {
 												// Define field mappings with possible API field names
 												const keyFields = [
@@ -496,6 +496,11 @@ function ResultsContent() {
 														label: 'Invoice Date',
 														possibleNames: ['invoiceDate', 'date', 'issueDate', 'billDate', 'documentDate', 'createdDate'],
 														excludeNames: ['dueDate', 'paymentDate', 'shipDate', 'deliveryDate']
+													},
+													{
+														label: 'Due Date',
+														possibleNames: ['dueDate', 'paymentDue', 'paymentDate', 'payBy', 'due'],
+														excludeNames: ['invoiceDate', 'issueDate', 'billDate', 'documentDate', 'createdDate', 'shipDate', 'deliveryDate']
 													}
 												];
 
@@ -598,7 +603,9 @@ function ResultsContent() {
 												// Total Amount (including tax)
 												'totalAmount', 'total', 'grandTotal', 'finalAmount', 'amountDue', 'totalWithTax', 'totalIncVat', 'totalIncludingTax', 'amountTotal', 'invoiceTotal',
 												// Invoice Date
-												'invoiceDate', 'date', 'issueDate', 'billDate', 'documentDate', 'createdDate'
+												'invoiceDate', 'date', 'issueDate', 'billDate', 'documentDate', 'createdDate',
+												// Due Date
+												'dueDate', 'paymentDue', 'paymentDate', 'payBy', 'due'
 											];
 											
 											const remainingFields = invoice.fields.filter(f => {
