@@ -1,0 +1,988 @@
+"use client";
+
+import {
+	AlertCircle,
+	ArrowLeft,
+	CheckCircle,
+	ChevronDown,
+	ChevronUp,
+	Download,
+	FileText,
+	RefreshCw,
+	XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import Viewer from "@/components/Viewer";
+
+import { INVOICE_COLLECTION } from "@/lib/constants";
+
+// Invoice collection information for display
+const COLLECTION_INFO = {
+	name: INVOICE_COLLECTION.name,
+	description: INVOICE_COLLECTION.description,
+	totalInvoices: INVOICE_COLLECTION.invoices.length,
+};
+
+interface ProcessedInvoice {
+	id: string;
+	fileName: string;
+	vendorName: string;
+	invoiceNumber: string;
+	amount: string;
+	status: string;
+	detectedTemplate?: string;
+	fields?: Array<{
+		fieldName: string;
+		value: {
+			value: string;
+			format: string;
+		};
+		validationState: "Valid" | "VerificationNeeded" | "Undefined";
+	}>;
+	error?: string;
+}
+
+interface ProcessingResult {
+	success: boolean;
+	summary: {
+		collectionId: string;
+		totalInvoices: number;
+		successfulInvoices: number;
+		failedInvoices: number;
+		totalFields: number;
+		validFields: number;
+		verificationNeededFields: number;
+		missingFields: number;
+		overallStatus: string;
+		timestamp: string;
+	};
+	invoices: ProcessedInvoice[];
+}
+
+// Minimal toolbar configuration - moved outside component to prevent re-creation
+const MINIMAL_TOOLBAR_ITEMS = [
+	{ type: "zoom-out" },
+	{ type: "zoom-in" },
+	{ type: "zoom-mode" },
+	{ type: "search" },
+];
+
+// Removed complex processing steps - just show simple processing state
+
+function ResultsContent() {
+	const [isProcessing, setIsProcessing] = useState(true);
+	const [results, setResults] = useState<ProcessingResult | null>(null);
+	const [error, setError] = useState<string | null>(null);
+	const [currentStep, setCurrentStep] = useState(1);
+	const [currentStepDescription, setCurrentStepDescription] = useState(
+		"Loading invoice collection...",
+	);
+	const [processingLogs, setProcessingLogs] = useState<string[]>([]);
+
+	const totalSteps = 5;
+
+	// Invoice collection information for log simulation
+	const invoiceDocuments = useMemo(
+		() => INVOICE_COLLECTION.invoices.map(inv => inv.filename),
+		[],
+	);
+	const [showDetailedResults, setShowDetailedResults] = useState(false);
+	const [showFormFields, setShowFormFields] = useState(false);
+
+	// Use invoice collection info
+	const collectionInfo = COLLECTION_INFO;
+
+	const addLog = useCallback((message: string) => {
+		setProcessingLogs((prev) => [...prev, message]);
+	}, []);
+
+	const simulateDocumentProcessing = useCallback(
+		async (documents: readonly string[]) => {
+			const templateMap: { [key: string]: string } = {
+				"invoice": "Standard Invoice",
+				"tech-solutions": "Standard Invoice", 
+				"marketing": "Standard Invoice",
+				"office-supplies": "Receipt",
+				"cloud-services": "Standard Invoice",
+				"consulting": "Service Invoice",
+				"print": "Receipt",
+				"facilities": "Service Invoice",
+				"software": "Standard Invoice",
+				"catering": "Receipt",
+				"transport": "Standard Invoice",
+			};
+
+			const getDocumentTemplate = (filename: string) => {
+				const key = Object.keys(templateMap).find((k) => filename.includes(k));
+				return key ? templateMap[key] : "Standard Invoice";
+			};
+
+			const getFieldCount = (filename: string) => {
+				if (filename.includes("receipt") || filename.includes("print") || filename.includes("catering"))
+					return Math.floor(Math.random() * 3) + 7; // 7-9 fields for receipts
+				if (filename.includes("service") || filename.includes("consulting") || filename.includes("facilities"))
+					return Math.floor(Math.random() * 3) + 8; // 8-10 fields for service invoices
+				return Math.floor(Math.random() * 4) + 10; // 10-13 fields for standard invoices
+			};
+
+			for (let i = 0; i < documents.length; i++) {
+				const doc = documents[i];
+				const template = getDocumentTemplate(doc);
+				const fieldCount = getFieldCount(doc);
+
+				// Processing log
+				addLog(`🚀 Processing ${doc}...`);
+				await new Promise((resolve) => setTimeout(resolve, 800));
+
+				// API response log
+				addLog(`📡 API response for ${doc}: 200 OK`);
+				await new Promise((resolve) => setTimeout(resolve, 300));
+
+				// Success log
+				addLog(
+					`✅ API success for ${doc}: { detectedTemplate: '${template}', fieldsCount: ${fieldCount}, hasFields: true }`,
+				);
+				await new Promise((resolve) => setTimeout(resolve, 400));
+
+				// Completion log
+				addLog(`✅ Successfully processed ${doc}`);
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
+		},
+		[addLog],
+	);
+
+	const processInvoiceCollection = useCallback(async () => {
+		try {
+			console.log(`🔄 Processing invoice collection`);
+
+			const documents = invoiceDocuments;
+
+			setCurrentStep(2);
+			setCurrentStepDescription("Classifying invoice types...");
+			addLog("🔧 Registering invoice templates...");
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			addLog("✅ Invoice templates registered successfully");
+
+			setCurrentStep(3);
+			setCurrentStepDescription("Extracting invoice data...");
+			addLog(`📥 Pre-loading all ${documents.length} invoice files...`);
+			await new Promise((resolve) => setTimeout(resolve, 800));
+			addLog(
+				`📦 File loading completed: ${documents.length}/${documents.length} invoices loaded successfully`,
+			);
+
+			// Start the API call but also simulate detailed processing
+			const responsePromise = fetch("/api/process-invoices", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ collectionId: "dynamic-invoices" }),
+			});
+
+			setCurrentStep(4);
+			setCurrentStepDescription("Validating extracted information...");
+			addLog("🚀 Starting parallel API processing of loaded invoices...");
+
+			// Simulate document processing while waiting for real API
+			await simulateDocumentProcessing(documents);
+
+			const response = await responsePromise;
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Failed to process invoices");
+			}
+
+			setCurrentStep(5);
+			setCurrentStepDescription("Generating processing results...");
+			addLog("🎉 Parallel processing completed");
+
+			const data: ProcessingResult = await response.json();
+			console.log("✅ Processing completed:", data);
+			addLog(
+				`🏁 Invoice collection processed: ${data.summary.successfulInvoices}/${data.summary.totalInvoices} invoices processed`,
+			);
+
+			setResults(data);
+			setIsProcessing(false);
+		} catch (err) {
+			console.error("❌ Processing failed:", err);
+			setError(err instanceof Error ? err.message : "Unknown error occurred");
+			setIsProcessing(false);
+		}
+	}, [invoiceDocuments, simulateDocumentProcessing, addLog]);
+
+	useEffect(() => {
+		// Start processing immediately
+		processInvoiceCollection();
+	}, [processInvoiceCollection]);
+
+	// Simplified form field matching - not used in invoice processing
+	const matchFormFieldsWithData = useCallback(
+		(
+			fields: Array<{
+				name: string;
+				type: string;
+				required: boolean;
+				value: string | null;
+			}>,
+			extractedData: ProcessedInvoice[],
+		) => {
+			// Return fields as-is without matching for invoice processing
+			return fields.map((field) => ({
+				...field,
+				extractedValue: null,
+				hasMatch: false,
+			}));
+		},
+		[],
+	);
+			const allExtractedFields = extractedData.flatMap(
+				(doc) => doc.fields || [],
+			);
+
+			return fields.map((field) => {
+				// Clean the form field name to find potential matches
+				const cleanFieldName = field.name
+					.replace(/^id_[a-f0-9]+_/, "") // Remove ID prefix
+					.replace(/^[a-f0-9]{32,}_/, "") // Remove long hash prefix
+					.toLowerCase()
+					.replace(/[^a-z0-9-]/g, "");
+
+				console.log(
+					`🔍 Matching field: "${field.name}" -> cleaned: "${cleanFieldName}"`,
+				);
+
+				// For invoice processing, we'll use direct field matching
+				// instead of package-specific mappings
+				const explicitMapping = null;
+
+				let matchingField = null;
+
+				if (explicitMapping) {
+					const mappingKey = Object.keys(explicitMapping)[0];
+					const mappingConfig = explicitMapping[
+						mappingKey as keyof typeof explicitMapping
+					] as {
+						extractedFields: string[];
+						document: string[];
+						type: string;
+						description: string;
+					};
+
+					console.log(
+						`  🎯 Found explicit mapping for "${cleanFieldName}" -> "${mappingKey}"`,
+					);
+					console.log(
+						`  🔎 Looking for extracted fields:`,
+						mappingConfig.extractedFields,
+					);
+
+					// Find matching extracted field based on explicit mapping
+					matchingField = allExtractedFields.find((extractedField) => {
+						const extractedFieldName = extractedField.fieldName.toLowerCase();
+
+						// Check if any of the mapped extracted field names match
+						return mappingConfig.extractedFields.some((mappedField) => {
+							const normalizedMappedField = mappedField.toLowerCase();
+							const isMatch =
+								extractedFieldName === normalizedMappedField ||
+								extractedFieldName.includes(normalizedMappedField) ||
+								normalizedMappedField.includes(extractedFieldName);
+
+							if (isMatch) {
+								console.log(
+									`    ✅ Matched "${extractedField.fieldName}" with mapped field "${mappedField}"`,
+								);
+							}
+							return isMatch;
+						});
+					});
+				}
+
+				// Fallback to original algorithmic matching if no explicit mapping found
+				if (!matchingField) {
+					console.log(
+						`  ⚠️ No explicit mapping found, trying algorithmic matching...`,
+					);
+
+					matchingField = allExtractedFields.find((extractedField) => {
+						const extractedFieldName = extractedField.fieldName
+							.toLowerCase()
+							.replace(/[^a-z0-9]/g, "");
+
+						console.log(
+							`    🔎 Comparing with extracted: "${extractedField.fieldName}" -> cleaned: "${extractedFieldName}"`,
+						);
+
+						// Exact match after cleaning
+						return cleanFieldName === extractedFieldName;
+					});
+				}
+
+				// Check for duplicate address values for line 2 fields
+				let extractedValue = matchingField?.value?.value || null;
+				let hasMatch = !!matchingField;
+
+				// Special handling for address line 2 fields to prevent duplicates
+				if (
+					cleanFieldName.includes("addressline2") ||
+					cleanFieldName.includes("address-line-2")
+				) {
+					// Find the corresponding line 1 field name
+					const line1FieldName = cleanFieldName
+						.replace(/addressline2|address-line-2/, "addressline1")
+						.replace(/addressline1/, "address-line-1");
+
+					// Find the line 1 field result
+					const line1Field = fields.find((f) => {
+						const line1CleanName = f.name
+							.replace(/^id_[a-f0-9]+_/, "")
+							.replace(/^[a-f0-9]{32,}_/, "")
+							.toLowerCase()
+							.replace(/[^a-z0-9-]/g, "");
+						return (
+							line1CleanName === line1FieldName ||
+							line1CleanName.includes("addressline1") ||
+							line1CleanName.includes("address-line-1")
+						);
+					});
+
+					if (line1Field && extractedValue) {
+						// Check if we need to find the line 1 extracted value
+						const line1ExplicitMapping = null; // packageMappings removed for invoice processing
+							const mappingKey = Object.keys(mapping)[0];
+							const normalizedMappingKey = mappingKey
+								.toLowerCase()
+								.replace(/[^a-z0-9-]/g, "");
+							const line1CleanName = line1Field.name
+								.replace(/^id_[a-f0-9]+_/, "")
+								.replace(/^[a-f0-9]{32,}_/, "")
+								.toLowerCase()
+								.replace(/[^a-z0-9-]/g, "");
+							return (
+								line1CleanName === normalizedMappingKey ||
+								line1CleanName.includes(normalizedMappingKey) ||
+								normalizedMappingKey.includes(line1CleanName)
+							);
+						});
+
+						if (line1ExplicitMapping) {
+							const line1MappingKey = Object.keys(line1ExplicitMapping)[0];
+							const line1MappingConfig = line1ExplicitMapping[
+								line1MappingKey as keyof typeof line1ExplicitMapping
+							] as {
+								extractedFields: string[];
+							};
+
+							// Find line 1 extracted value
+							const line1MatchingField = allExtractedFields.find(
+								(extractedField) => {
+									const extractedFieldName =
+										extractedField.fieldName.toLowerCase();
+									return line1MappingConfig.extractedFields.some(
+										(mappedField) => {
+											const normalizedMappedField = mappedField.toLowerCase();
+											return (
+												extractedFieldName === normalizedMappedField ||
+												extractedFieldName.includes(normalizedMappedField) ||
+												normalizedMappedField.includes(extractedFieldName)
+											);
+										},
+									);
+								},
+							);
+
+							const line1Value = line1MatchingField?.value?.value;
+
+							// If line 1 and line 2 values are the same, don't fill line 2
+							if (line1Value && line1Value === extractedValue) {
+								console.log(
+									`  🚫 Skipping "${field.name}" - duplicate of line 1: "${line1Value}"`,
+								);
+								extractedValue = null;
+								hasMatch = false;
+							}
+						}
+					}
+				}
+
+				const result = {
+					...field,
+					extractedValue,
+					hasMatch,
+				};
+
+				if (matchingField && hasMatch) {
+					console.log(
+						`  🎯 Final match: "${field.name}" -> "${matchingField.fieldName}" = "${extractedValue}"`,
+					);
+				} else if (matchingField && !hasMatch) {
+					console.log(
+						`  🚫 Duplicate prevented: "${field.name}" -> "${matchingField.fieldName}"`,
+					);
+				} else {
+					console.log(`  ❌ No match found for "${field.name}"`);
+				}
+
+				return result;
+			});
+		},
+		[],
+	);
+
+
+	const getStatusIcon = (status: string) => {
+		switch (status) {
+			case "Valid":
+				return <CheckCircle className="h-4 w-4 text-green-500" />;
+			case "VerificationNeeded":
+				return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+			case "Undefined":
+				return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+			default:
+				return <FileText className="h-4 w-4 text-gray-400" />;
+		}
+	};
+
+	const getStatusColor = (status: string) => {
+		switch (status) {
+			case "Valid":
+				return "text-green-600 bg-green-50";
+			case "VerificationNeeded":
+				return "text-yellow-600 bg-yellow-50";
+			case "Undefined":
+				return "text-yellow-600 bg-yellow-50";
+			default:
+				return "text-gray-600 bg-gray-50";
+		}
+	};
+
+	const formatFieldName = (fieldName: string) => {
+		return fieldName
+			.replace(/([A-Z])/g, " $1")
+			.replace(/^./, (str) => str.toUpperCase())
+			.trim();
+	};
+
+	const getCategoryIcon = () => {
+		return "";
+	};
+
+	// Handle error state
+	if (error && !isProcessing) {
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+				<div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+					<div className="mb-8">
+						<Link
+							href="/preview"
+							className="inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+						>
+							<ArrowLeft className="mr-2 h-4 w-4" />
+							Back to Invoice Preview
+						</Link>
+					</div>
+
+					<div className="text-center">
+						<div className="bg-white rounded-lg shadow-md p-8">
+							<XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+							<h1 className="text-2xl font-bold text-gray-900 mb-4">
+								Processing Failed
+							</h1>
+							<p className="text-gray-600 mb-6">{error}</p>
+							<Link
+								href="/preview"
+								className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+							>
+								Try Again
+							</Link>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (isProcessing) {
+		return (
+			<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+				<div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+					<div className="text-center mb-12">
+						<h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
+							Processing {collectionInfo.name}
+						</h1>
+						<p className="text-lg text-gray-600 mb-2">
+							Analyzing {collectionInfo.totalInvoices} invoices
+						</p>
+						<p className="text-sm text-gray-500">{collectionInfo.description}</p>
+					</div>
+
+					<div className="bg-white rounded-lg shadow-md p-12">
+						<div className="text-center">
+							<RefreshCw className="h-12 w-12 text-indigo-600 animate-spin mx-auto mb-4" />
+							<h3 className="text-lg font-medium text-gray-900 mb-2">
+								Processing Documents
+							</h3>
+							<p className="text-gray-600 mb-4">
+								Classifying and extracting data from documents using AI Document
+								Processing...
+							</p>
+							<div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+								<p className="text-sm font-medium text-blue-800 mb-2">
+									Step {currentStep} of {totalSteps}
+								</p>
+								<p className="text-blue-700 mb-4">{currentStepDescription}</p>
+
+								{/* Processing Logs */}
+								{processingLogs.length > 0 && (
+									<div className="mt-4 p-3 bg-gray-900 rounded-lg text-xs font-mono max-h-48 overflow-y-auto text-left">
+										{processingLogs.slice(-8).map((log, index) => (
+											<div
+												key={`log-${index}-${Date.now()}`}
+												className="text-green-400 mb-1 text-left"
+											>
+												{log}
+											</div>
+										))}
+										{processingLogs.length > 8 && (
+											<div className="text-gray-500 mt-2 text-left">
+												... showing last 8 entries ...
+											</div>
+										)}
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	// Show results if processing is complete
+	if (!results) return null;
+
+	// Get all processed invoices for validation
+	const sourceInvoices = results.invoices || [];
+
+	// Generate executive summary for invoice processing
+	const generateExecutiveSummary = () => {
+		const failedInvoices = sourceInvoices.filter(
+			(invoice) => invoice.status === "failed",
+		);
+
+		// Determine status: VALID, REVIEW REQUIRED, or INVALID
+		const hasFailedInvoices = failedInvoices.length > 0;
+		const hasMissingData = results.summary.missingFields > 0;
+		const hasVerificationNeeded = results.summary.verificationNeededFields > 0;
+
+		let status: string;
+		let isValid: boolean;
+
+		if (hasFailedInvoices || hasMissingData) {
+			status = "Invalid";
+			isValid = false;
+		} else if (hasVerificationNeeded) {
+			status = "Valid - Some Review Required";
+			isValid = false; // Not fully valid, needs review
+		} else {
+			status = "Valid";
+			isValid = true;
+		}
+
+		const missingData = [];
+
+		// Check for failed invoices
+		if (failedInvoices.length > 0) {
+			missingData.push(
+				`${failedInvoices.length} invoice${failedInvoices.length > 1 ? "s" : ""} failed to process: ${failedInvoices.map((inv) => inv.fileName).join(", ")}`,
+			);
+		}
+
+		// Check for verification needed fields
+		if (results.summary.verificationNeededFields > 0) {
+			missingData.push(
+				`${results.summary.verificationNeededFields} field${results.summary.verificationNeededFields > 1 ? "s" : ""} require verification`,
+			);
+		}
+
+		// Check for missing fields
+		if (results.summary.missingFields > 0) {
+			missingData.push(
+				`${results.summary.missingFields} field${results.summary.missingFields > 1 ? "s" : ""} could not be extracted`,
+			);
+		}
+
+		// Check for missing critical invoice fields
+		const criticalFields = ["vendorName", "invoiceNumber", "totalAmount", "invoiceDate"];
+		
+		sourceInvoices.forEach((invoice) => {
+			if (invoice.fields) {
+				const extractedFields = invoice.fields.map(f => f.fieldName);
+				const missingCriticalFields = criticalFields.filter(field => 
+					!extractedFields.includes(field) || 
+					invoice.fields.find(f => f.fieldName === field && f.validationState === "Undefined")
+				);
+				
+				if (missingCriticalFields.length > 0) {
+					missingData.push(
+						`${invoice.fileName}: Missing critical fields: ${missingCriticalFields.join(", ")}`
+					);
+				}
+			}
+		});
+
+		return {
+			isValid,
+			status,
+			missingData,
+			recommendation:
+				status === "Valid"
+					? "All invoices processed successfully and ready for review."
+					: status === "Valid - Some Review Required"
+						? `Invoice data extracted successfully. ${results.summary.verificationNeededFields} field${results.summary.verificationNeededFields > 1 ? "s" : ""} require verification.`
+						: "Some invoices require additional review or reprocessing.",
+		};
+	};
+
+	const executiveSummary = generateExecutiveSummary();
+
+	// Find the first invoice PDF document for the Viewer
+	const firstInvoiceDoc = results.invoices && results.invoices.length > 0 
+		? results.invoices[0]
+		: null;
+
+	const pdfPath = firstInvoiceDoc
+		? `/documents/invoices/${firstInvoiceDoc.fileName}`
+		: null;
+
+	return (
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+			<div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+				<div className="mb-8">
+					<Link
+						href="/preview"
+						className="inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+					>
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						Back to Invoice Preview
+					</Link>
+				</div>
+
+				<div className="text-center mb-8">
+					<h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+						Invoice Processing Complete
+					</h1>
+					<p className="mt-2 text-lg text-gray-600">
+						{results?.summary?.totalInvoices || 0} invoices processed
+					</p>
+					<p className="mt-1 text-sm text-gray-500">
+						AI-powered document classification and data extraction results
+					</p>
+				</div>
+
+				{/* Executive Summary */}
+				<div className="bg-white rounded-lg shadow-md p-5 mb-6">
+					<h2 className="text-xl font-semibold text-gray-900 mb-4">
+						Invoice Processing Summary:{" "}
+						<span
+							className={`${
+								executiveSummary.status === "Valid"
+									? "text-green-600"
+									: executiveSummary.status === "Valid - Some Review Required"
+										? "text-yellow-600"
+										: "text-red-600"
+							}`}
+						>
+							{executiveSummary.status}
+						</span>
+					</h2>
+
+					{/* Recommendation */}
+					<div className="mb-4">
+						<div
+							className={`p-3 rounded-lg border-l-4 ${
+								executiveSummary.status === "Valid"
+									? "bg-green-50 border-green-400"
+									: executiveSummary.status === "Valid - Some Review Required"
+										? "bg-yellow-50 border-yellow-400"
+										: "bg-red-50 border-red-400"
+							}`}
+						>
+							<p
+								className={`font-medium ${
+									executiveSummary.status === "Valid"
+										? "text-green-800"
+										: executiveSummary.status === "Valid - Some Review Required"
+											? "text-yellow-800"
+											: "text-red-800"
+								}`}
+							>
+								{executiveSummary.recommendation}
+							</p>
+						</div>
+					</div>
+
+					{/* Issues Details - Only show for Invalid status or if there are non-verification issues */}
+					{(executiveSummary.status === "Invalid" ||
+						(executiveSummary.status === "Valid - Some Review Required" &&
+							executiveSummary.missingData.some(
+								(issue) => !issue.includes("require verification"),
+							))) && (
+						<div className="mb-4">
+							<h3 className="text-lg font-medium text-gray-900 mb-2">
+								Issues Requiring Attention:
+							</h3>
+							<ul className="space-y-1">
+								{executiveSummary.missingData
+									.filter((issue) => !issue.includes("require verification"))
+									.map((issue) => (
+										<li
+											key={`issue-${issue.replace(/\s+/g, "-").toLowerCase()}`}
+											className="flex items-start"
+										>
+											<AlertCircle className="h-4 w-4 mr-2 mt-1 flex-shrink-0 text-red-500" />
+											<span className="text-gray-700 text-sm">{issue}</span>
+										</li>
+									))}
+							</ul>
+						</div>
+					)}
+
+					{/* Processing Statistics */}
+					<div className="grid md:grid-cols-4 gap-3">
+						<div className="text-center p-2 bg-gray-50 rounded-lg">
+							<div className="text-lg font-bold text-indigo-600">
+								{results.summary.successfulInvoices}
+								/{results.summary.totalInvoices}
+							</div>
+							<div className="text-xs text-gray-600">Processed Invoices</div>
+						</div>
+						<div className="text-center p-2 bg-gray-50 rounded-lg">
+							<div className="text-lg font-bold text-green-600">
+								{results.summary.validFields}
+							</div>
+							<div className="text-xs text-gray-600">Valid Fields</div>
+						</div>
+						<div className="text-center p-2 bg-gray-50 rounded-lg">
+							<div className="text-lg font-bold text-yellow-600">
+								{results.summary.verificationNeededFields}
+							</div>
+							<div className="text-xs text-gray-600">Need Review</div>
+						</div>
+						<div className="text-center p-2 bg-gray-50 rounded-lg">
+							<div className="text-lg font-bold text-red-600">
+								{results.summary.missingFields}
+							</div>
+							<div className="text-xs text-gray-600">Missing Data</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Detailed Results - Collapsible */}
+				<div className="bg-white rounded-lg shadow-md mb-8">
+					<button
+						type="button"
+						onClick={() => setShowDetailedResults(!showDetailedResults)}
+						className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 rounded-lg transition-colors"
+					>
+						<div>
+							<h3 className="text-lg font-semibold text-gray-900">
+								Detailed Invoice Analysis
+							</h3>
+							<p className="text-sm text-gray-600">
+								View extracted data from each invoice
+							</p>
+						</div>
+						{showDetailedResults ? (
+							<ChevronUp className="h-5 w-5 text-gray-400" />
+						) : (
+							<ChevronDown className="h-5 w-5 text-gray-400" />
+						)}
+					</button>
+
+					{showDetailedResults && (
+						<div className="px-6 pb-6 space-y-6 border-t border-gray-200">
+							{results.documents
+								.filter((doc) => doc.category !== "application")
+								.map((doc) => (
+									<div
+										key={doc.id}
+										className="bg-white rounded-lg shadow-md p-6"
+									>
+										<div className="flex items-center mb-4">
+											<span className="text-2xl mr-3">{getCategoryIcon()}</span>
+											<div className="flex-1">
+												<h3 className="text-lg font-semibold text-gray-900">
+													{doc.documentType}
+												</h3>
+												<p className="text-sm text-gray-500">{doc.fileName}</p>
+												{doc.detectedTemplate && (
+													<p className="text-xs text-blue-600">
+														Detected: {doc.detectedTemplate}
+													</p>
+												)}
+											</div>
+											<span
+												className={`px-3 py-1 rounded-full text-xs font-medium ${
+													doc.status === "completed"
+														? "bg-green-100 text-green-800"
+														: "bg-red-100 text-red-800"
+												}`}
+											>
+												{doc.status === "completed" ? "Processed" : "Failed"}
+											</span>
+										</div>
+
+										{doc.status === "failed" ? (
+											<div className="bg-red-50 border border-red-200 rounded-lg p-4">
+												<div className="flex items-center">
+													<XCircle className="h-5 w-5 text-red-500 mr-2" />
+													<span className="font-medium text-red-800">
+														Processing Failed
+													</span>
+												</div>
+												<p className="text-sm text-red-700 mt-1">{doc.error}</p>
+											</div>
+										) : (
+											<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+												{doc.fields && doc.fields.length > 0 ? (
+													doc.fields.map((field) => (
+														<div
+															key={field.fieldName}
+															className="border rounded-lg p-3"
+														>
+															<div className="flex items-center justify-between mb-1">
+																<span className="text-sm font-medium text-gray-700">
+																	{formatFieldName(field.fieldName)}
+																</span>
+																{getStatusIcon(field.validationState)}
+															</div>
+															<div
+																className={`text-sm py-1 rounded ${getStatusColor(field.validationState)}`}
+															>
+																{field.value?.value || "Not found"}
+															</div>
+															{field.value?.format && (
+																<div className="text-xs text-gray-500 mt-1">
+																	Format: {field.value.format}
+																</div>
+															)}
+														</div>
+													))
+												) : (
+													<div className="col-span-full text-center py-8 text-gray-500">
+														No fields extracted from this invoice
+													</div>
+												)}
+											</div>
+										)}
+									</div>
+								))}
+						</div>
+					)}
+				</div>
+
+				{/* Invoice Document Preview - Collapsible */}
+				{pdfPath && (
+					<div className="bg-white rounded-lg shadow-md mb-8">
+						<button
+							type="button"
+							onClick={() => setShowFormFields(!showFormFields)}
+							className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-50 rounded-lg transition-colors"
+						>
+							<div>
+								<h3 className="text-lg font-semibold text-gray-900">
+									Invoice Document Preview
+								</h3>
+								<p className="text-sm text-gray-600">
+									View the processed invoice PDF
+								</p>
+							</div>
+							{showFormFields ? (
+								<ChevronUp className="h-5 w-5 text-gray-400" />
+							) : (
+								<ChevronDown className="h-5 w-5 text-gray-400" />
+							)}
+						</button>
+
+						{showFormFields && (
+							<div className="border-t border-gray-200">
+								<Viewer
+									document={pdfPath}
+									toolbarItems={MINIMAL_TOOLBAR_ITEMS}
+								/>
+							</div>
+						)}
+					</div>
+				)}
+
+
+				{/* Action Buttons - Moved to bottom */}
+				<div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+					<Link
+						href="/preview"
+						className="inline-flex items-center px-6 py-3 border border-indigo-600 text-base font-medium rounded-lg text-indigo-600 bg-white hover:bg-indigo-50 transition-colors"
+					>
+						Process More Invoices
+					</Link>
+					<button
+						type="button"
+						onClick={() => {
+							const blob = new Blob([JSON.stringify(results, null, 2)], {
+								type: "application/json",
+							});
+							const url = URL.createObjectURL(blob);
+							const a = document.createElement("a");
+							a.href = url;
+							a.download = `invoice-processing-results.json`;
+							a.click();
+							URL.revokeObjectURL(url);
+						}}
+						className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+					>
+						<Download className="mr-2 h-4 w-4" />
+						Download Results
+					</button>
+				</div>
+
+				<div className="mt-8 text-center text-sm text-gray-500">
+					<p>
+						Nutrient AI Document Processing SDK • Processed at{" "}
+						{new Date(results.summary.timestamp).toLocaleString()}
+					</p>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export default function Results() {
+	return (
+		<Suspense
+			fallback={
+				<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+					<div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+						<div className="bg-white rounded-lg shadow-md p-12">
+							<div className="text-center">
+								<RefreshCw className="h-12 w-12 text-indigo-600 animate-spin mx-auto mb-4" />
+								<h3 className="text-lg font-medium text-gray-900 mb-2">
+									Loading Results
+								</h3>
+								<p className="text-gray-600">
+									Please wait while we load your processing results...
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+		>
+			<ResultsContent />
+		</Suspense>
+	);
+}
