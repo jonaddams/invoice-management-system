@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Nutrient AI Document Processing Loan Application POC",
+	title: "Nutrient AI Document Invoice Processing POC",
 	description:
-		"AI-powered document classification and data extraction for loan applications",
+		"AI-powered document classification and data extraction for invoices using Nutrient Viewer and AI Document Processing SDK.",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const webSDKVersion = process.env.NEXT_PUBLIC_WEB_SDK_VERSION || "1.5.0";
+	const webSDKVersion = process.env.NEXT_PUBLIC_WEB_SDK_VERSION || "1.6.0";
 	const cdnUrl = `https://cdn.cloud.pspdfkit.com/pspdfkit-web@${webSDKVersion}/nutrient-viewer.js`;
 	return (
 		<html lang="en">
