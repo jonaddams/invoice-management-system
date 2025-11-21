@@ -3,6 +3,9 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "functions": {
+    "src/app/api/process-invoices/route.ts": {
+      "maxDuration": 300
+    },
     "src/app/api/process-package/route.ts": {
       "maxDuration": 300
     },
@@ -11,6 +14,7 @@
     }
   },
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "NEXT_PUBLIC_WEB_SDK_VERSION": "1.8.0"
   }
 }

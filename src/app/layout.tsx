@@ -14,7 +14,7 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const webSDKVersion = process.env.NEXT_PUBLIC_WEB_SDK_VERSION || "1.6.0";
+	const webSDKVersion = process.env.NEXT_PUBLIC_WEB_SDK_VERSION || "1.8.0";
 	const cdnUrl = `https://cdn.cloud.pspdfkit.com/pspdfkit-web@${webSDKVersion}/nutrient-viewer.js`;
 	return (
 		<html lang="en">
@@ -24,16 +24,14 @@ export default function RootLayout({
 				<link
 					rel="preconnect"
 					href="https://cdn.cloud.pspdfkit.com"
-					crossOrigin=""
+					crossOrigin="anonymous"
 				/>
-
-				{/* Preload the script to start downloading immediately */}
-				<link rel="preload" href={cdnUrl} as="script" crossOrigin="" />
-
-				{/* Load the script before page becomes interactive */}
-				<Script src={cdnUrl} strategy="beforeInteractive" />
 			</head>
-			<body>{children}</body>
+			<body>
+				{children}
+				{/* Load the script after page interactive to avoid blocking */}
+				<Script src={cdnUrl} strategy="afterInteractive" />
+			</body>
 		</html>
 	);
 }

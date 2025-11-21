@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { type NextRequest, NextResponse } from "next/server";
 import { type DocumentTemplate } from "@/types";
 
+// Configure route segment for longer execution time
+export const maxDuration = 300; // 5 minutes (maximum for Pro plan, 60s for Hobby)
+export const dynamic = 'force-dynamic'; // Disable caching for this route
+
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_NUTRIENT_API_URL || "https://api.xtractflow.com";
 const AUTH_TOKEN = process.env.NUTRIENT_AUTH_TOKEN;
