@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import ThemeScript from "@/components/ThemeScript";
+import NutrientSDKLoader from "@/components/NutrientSDKLoader";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,8 +18,6 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const webSDKVersion = process.env.NEXT_PUBLIC_WEB_SDK_VERSION || "1.8.0";
-	const cdnUrl = `https://cdn.cloud.pspdfkit.com/pspdfkit-web@${webSDKVersion}/nutrient-viewer.js`;
 	return (
 		<html lang="en" className="scroll-smooth" suppressHydrationWarning>
 			<head>
@@ -31,10 +30,9 @@ export default function RootLayout({
 				/>
 				{/* Prevent flash of unstyled content */}
 				<ThemeScript />
-				{/* Load Nutrient SDK using standard script tag to avoid ORB issues */}
-				<script src={cdnUrl} async></script>
 			</head>
 			<body className="min-h-screen antialiased" suppressHydrationWarning>
+				<NutrientSDKLoader />
 				{children}
 			</body>
 		</html>
