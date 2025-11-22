@@ -358,7 +358,7 @@ function ResultsContent() {
 					<p className="mt-2 text-lg" style={{ color: "var(--foreground)", opacity: 0.8 }}>
 						{results?.summary?.totalInvoices || 0} invoices processed
 					</p>
-					<p className="mt-1 text-sm" style={{ color: "var(--neutral)" }}>
+					<p className="mt-1 text-sm" style={{ color: "var(--foreground)", opacity: 0.7 }}>
 						AI-powered document classification and data extraction results
 					</p>
 				</div>
@@ -381,19 +381,19 @@ function ResultsContent() {
 						{(() => {
 							// Calculate real statistics from the actual displayed data
 							const totalInvoices = results.invoices.length;
-							const successfulInvoices = results.invoices.filter(inv => 
+							const successfulInvoices = results.invoices.filter(inv =>
 								inv.status === 'completed' || inv.status === 'success'
 							).length;
-							
+
 							let validFields = 0;
 							let needsReviewFields = 0;
 							let missingFields = 0;
-							
+
 							results.invoices.forEach(invoice => {
 								if (invoice.fields && invoice.fields.length > 0) {
 									invoice.fields.forEach(field => {
 										const hasValue = field.value?.value && field.value.value.trim() !== '';
-										
+
 										if (field.validationState === 'Valid') {
 											validFields++;
 										} else if (field.validationState === 'VerificationNeeded' || field.validationState === 'Undefined') {
@@ -410,40 +410,43 @@ function ResultsContent() {
 									});
 								}
 							});
-							
+
 							return (
 								<>
-									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
-										<div className="text-lg font-bold" style={{ color: "var(--disc-pink)" }}>
+									<div className="text-center p-4 rounded-lg border" style={{ background: "transparent", borderColor: "var(--neutral)" }}>
+										<div className="text-2xl font-bold" style={{ color: "var(--disc-pink)" }}>
 											{successfulInvoices}/{totalInvoices}
 										</div>
-										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Processed Invoices</div>
+										<div className="text-sm mt-1" style={{ color: "var(--foreground)", opacity: 0.7 }}>Processed Invoices</div>
 									</div>
-									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
-										<div className="text-lg font-bold" style={{ color: "var(--data-green)" }}>
+									<div className="text-center p-4 rounded-lg border" style={{ background: "transparent", borderColor: "var(--neutral)" }}>
+										<div className="text-2xl font-bold" style={{ color: "var(--data-green)" }}>
 											{validFields}
 										</div>
-										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Valid Fields</div>
+										<div className="text-sm mt-1" style={{ color: "var(--foreground)", opacity: 0.7 }}>Valid Fields</div>
 									</div>
-									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
-										<div className="text-lg font-bold" style={{ color: "var(--digital-pollen)" }}>
+									<div className="text-center p-4 rounded-lg border" style={{ background: "transparent", borderColor: "var(--neutral)" }}>
+										<div className="text-2xl font-bold" style={{ color: "var(--digital-pollen)" }}>
 											{needsReviewFields}
 										</div>
-										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Need Review</div>
+										<div className="text-sm mt-1" style={{ color: "var(--foreground)", opacity: 0.7 }}>Need Review</div>
 									</div>
-									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
-										<div className="text-lg font-bold" style={{ color: "var(--code-coral)" }}>
+									<div className="text-center p-4 rounded-lg border" style={{ background: "transparent", borderColor: "var(--neutral)" }}>
+										<div className="text-2xl font-bold" style={{ color: "var(--code-coral)" }}>
 											{missingFields}
 										</div>
-										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Missing Data</div>
+										<div className="text-sm mt-1" style={{ color: "var(--foreground)", opacity: 0.7 }}>Missing Data</div>
 									</div>
 								</>
 							);
 						})()}
 					</div>
-					
+
 					{/* Legend */}
-					<div className="mt-4 p-3 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
+					<div className="mt-4 p-3 rounded-lg border" style={{
+						background: "transparent",
+						borderColor: "var(--neutral)"
+					}}>
 						<h3 className="text-sm font-medium" style={{ color: "var(--foreground)", marginBottom: "0.25rem" }}>Field Status Legend</h3>
 						<div className="flex flex-wrap gap-4 text-xs">
 							<div className="flex items-center space-x-2">

@@ -152,7 +152,11 @@ export default function PreviewInvoices() {
 								<p className="text-sm mt-1" style={{ color: "var(--neutral)" }}>Add PDF files to /public/documents/invoices/ folder</p>
 							</div>
 						) : (
-							invoices.map((invoice) => (
+							invoices.map((invoice) => {
+								const isSelected = selectedInvoice === invoice.filename;
+								const isDarkMode = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+								return (
 								<button
 									key={invoice.id}
 									type="button"
@@ -160,17 +164,24 @@ export default function PreviewInvoices() {
 									className="w-full px-6 py-4 transition-all text-left border-b last:border-b-0"
 									style={{
 										borderColor: "var(--neutral)",
-										background: selectedInvoice === invoice.filename ? "var(--digital-pollen-dark)" : "transparent",
-										borderLeftWidth: selectedInvoice === invoice.filename ? "4px" : "0",
-										borderLeftColor: selectedInvoice === invoice.filename ? "var(--digital-pollen)" : "transparent"
+										background: isSelected
+											? (isDarkMode ? "var(--digital-pollen-dark)" : "hsla(43, 82%, 80%, 0.4)")
+											: "transparent",
+										borderLeftWidth: isSelected ? "4px" : "0",
+										borderLeftColor: isSelected ? "var(--digital-pollen)" : "transparent"
 									}}
 									onMouseEnter={(e) => {
-										if (selectedInvoice !== invoice.filename) {
-											e.currentTarget.style.opacity = "0.8";
+										if (!isSelected) {
+											const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+											e.currentTarget.style.background = isDarkMode
+												? "rgba(229, 192, 79, 0.1)"
+												: "hsla(43, 82%, 67%, 0.2)";
 										}
 									}}
 									onMouseLeave={(e) => {
-										e.currentTarget.style.opacity = "1";
+										if (!isSelected) {
+											e.currentTarget.style.background = "transparent";
+										}
 									}}
 								>
 									<div className="flex items-center justify-between">
@@ -179,27 +190,43 @@ export default function PreviewInvoices() {
 												<div
 													className="w-12 h-12 rounded-lg flex items-center justify-center"
 													style={{
-														background: selectedInvoice === invoice.filename ? "var(--digital-pollen)" : "rgba(239, 68, 68, 0.1)"
+														background: isSelected
+															? (isDarkMode ? "var(--digital-pollen)" : "var(--digital-pollen)")
+															: "rgba(239, 68, 68, 0.1)"
 													}}
 												>
-													<File className="h-6 w-6" style={{ color: selectedInvoice === invoice.filename ? "var(--black)" : "var(--code-coral)" }} />
+													<File className="h-6 w-6" style={{ color: isSelected ? "var(--black)" : "var(--code-coral)" }} />
 												</div>
 											</div>
 											<div className="flex-1 min-w-0">
-												<p className="text-sm font-medium truncate" style={{ color: selectedInvoice === invoice.filename ? "var(--white)" : "var(--foreground)" }}>
+												<p className="text-sm font-medium truncate" style={{
+													color: isSelected
+														? (isDarkMode ? "var(--white)" : "var(--black)")
+														: "var(--foreground)"
+												}}>
 													{invoice.filename}
 												</p>
-												<p className="text-xs mt-1" style={{ color: selectedInvoice === invoice.filename ? "var(--white)" : "var(--foreground)", opacity: selectedInvoice === invoice.filename ? 0.8 : 0.6 }}>
+												<p className="text-xs mt-1" style={{
+													color: isSelected
+														? (isDarkMode ? "var(--white)" : "var(--black)")
+														: "var(--foreground)",
+													opacity: isSelected ? 0.8 : 0.6
+												}}>
 													{invoice.size ? `${Math.round(invoice.size / 1024 / 1024 * 100) / 100} MB` : 'Unknown size'}
 												</p>
 											</div>
 										</div>
 										<div className="flex-shrink-0">
-											<Eye className="h-5 w-5" style={{ color: selectedInvoice === invoice.filename ? "var(--digital-pollen)" : "var(--neutral)" }} />
+											<Eye className="h-5 w-5" style={{
+												color: isSelected
+													? (isDarkMode ? "var(--digital-pollen)" : "var(--digital-pollen)")
+													: "var(--neutral)"
+											}} />
 										</div>
 									</div>
 								</button>
-							))
+								);
+							})
 						)}
 					</div>
 				</div>
