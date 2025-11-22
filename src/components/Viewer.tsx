@@ -105,7 +105,7 @@ export default function Viewer({
 	useEffect(() => {
 		// Reset error state for new documents
 		setError(null);
-		
+
 		// Check for missing pay stub
 		if (typeof document === 'string' && document.includes('joseph-sample-sample-pay-stub.pdf')) {
 			setIsLoading(false);
@@ -114,27 +114,29 @@ export default function Viewer({
 		}
 
 		let timeoutId: NodeJS.Timeout;
-		
+		let retryCount = 0;
+		const MAX_RETRIES = 50; // 5 seconds maximum wait time (50 * 100ms)
+
 		const tryLoad = () => {
 			const container = containerRef.current;
 			const { NutrientViewer } = window as NutrientViewerWindow;
-			
-			console.log("🔍 Trying to load - Container:", !!container, "NutrientViewer:", !!NutrientViewer);
-			
+
+			console.log("🔍 Trying to load - Container:", !!container, "NutrientViewer:", !!NutrientViewer, "Retry:", retryCount);
+
 			if (container && NutrientViewer) {
 				const baseConfig = {
 					container: container as HTMLElement,
 					document: document,
 				};
 
-				const loadConfig = memoizedToolbarItems 
+				const loadConfig = memoizedToolbarItems
 					? { ...baseConfig, toolbarItems: memoizedToolbarItems }
 					: baseConfig;
 
 				NutrientViewer.load(loadConfig).then(async (instance: unknown) => {
 					instanceRef.current = instance as ViewerInstance;
 					setIsLoading(false);
-					
+
 					try {
 						const formFields = await (instance as ViewerInstance).getFormFields() as unknown[];
 						console.log("📋 PDF Form Fields:", formFields);
@@ -193,8 +195,14 @@ export default function Viewer({
 					console.error("❌ Error loading document:", error);
 					setError("Failed to load document. Please refresh the page and try again.");
 				});
-			} else {
+			} else if (retryCount < MAX_RETRIES) {
+				retryCount++;
 				timeoutId = setTimeout(tryLoad, 100);
+			} else {
+				// Max retries reached
+				setIsLoading(false);
+				setError("Failed to load Nutrient Viewer SDK. Please check your internet connection and refresh the page.");
+				console.error("❌ Max retries reached. NutrientViewer SDK failed to load.");
 			}
 		};
 
