@@ -8,7 +8,8 @@ import {
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import Header from "@/components/Header";
 
 
 
@@ -56,6 +57,7 @@ function ResultsContent() {
 	const [error, setError] = useState<string | null>(null);
 	const [processingLogs, setProcessingLogs] = useState<string[]>([]);
 	const [terminalRef, setTerminalRef] = useState<HTMLDivElement | null>(null);
+	const hasStartedProcessing = useRef(false);
 
 	const [showJsonModal, setShowJsonModal] = useState(false);
 
@@ -198,6 +200,12 @@ function ResultsContent() {
 	}, [simulateDocumentProcessing, addLog]);
 
 	useEffect(() => {
+		// Prevent duplicate execution
+		if (hasStartedProcessing.current) {
+			return;
+		}
+		hasStartedProcessing.current = true;
+
 		// Start processing immediately
 		processInvoiceCollection();
 	}, [processInvoiceCollection]);
@@ -214,12 +222,14 @@ function ResultsContent() {
 	// Show processing UI while processing
 	if (isProcessing) {
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+			<div className="min-h-screen" style={{ background: "var(--background)" }}>
+				<Header />
 				<div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
 					<div className="mb-8">
 						<Link
 							href="/preview"
-							className="inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+							className="inline-flex items-center hover:opacity-80 transition-opacity"
+							style={{ color: "var(--foreground)" }}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" />
 							Back to Invoice Preview
@@ -227,26 +237,26 @@ function ResultsContent() {
 					</div>
 
 					<div className="text-center mb-8">
-						<h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+						<h1 className="text-3xl font-bold sm:text-4xl" style={{ color: "var(--foreground)" }}>
 							Processing Invoices
 						</h1>
-						<p className="mt-2 text-lg text-gray-600">
+						<p className="mt-2 text-lg" style={{ color: "var(--foreground)", opacity: 0.8 }}>
 							AI is analyzing your invoice documents
 						</p>
 					</div>
 
 
 					{/* Processing Logs Terminal */}
-					<div className="bg-gray-900 rounded-lg shadow-md overflow-hidden">
-						<div className="bg-gray-800 px-4 py-2 flex items-center space-x-2">
-							<div className="w-3 h-3 rounded-full bg-red-500"></div>
-							<div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-							<div className="w-3 h-3 rounded-full bg-green-500"></div>
-							<span className="text-gray-300 text-sm font-mono ml-4">
+					<div className="rounded-lg overflow-hidden border" style={{ background: "var(--black)", borderColor: "var(--neutral)", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+						<div className="px-4 py-2 flex items-center space-x-2" style={{ background: "var(--warm-gray-950)" }}>
+							<div className="w-3 h-3 rounded-full" style={{ background: "var(--code-coral)" }}></div>
+							<div className="w-3 h-3 rounded-full" style={{ background: "var(--digital-pollen)" }}></div>
+							<div className="w-3 h-3 rounded-full" style={{ background: "var(--data-green)" }}></div>
+							<span className="text-sm font-mono ml-4" style={{ color: "var(--warm-gray-400)" }}>
 								Invoice Processing Terminal
 							</span>
 						</div>
-						<div 
+						<div
 							ref={setTerminalRef}
 							className="p-4 h-64 overflow-y-auto scroll-smooth"
 							style={{ scrollBehavior: 'smooth' }}
@@ -255,13 +265,14 @@ function ResultsContent() {
 								{processingLogs.map((log, index) => (
 									<div
 										key={index}
-										className="text-green-400 mb-1"
+										className="mb-1"
+										style={{ color: "var(--data-green)" }}
 									>
 										{log}
 									</div>
 								))}
 								{/* Blinking cursor */}
-								<div className="text-green-400 inline-block animate-pulse">▋</div>
+								<div className="inline-block animate-pulse" style={{ color: "var(--data-green)" }}>▋</div>
 							</div>
 						</div>
 					</div>
@@ -270,15 +281,17 @@ function ResultsContent() {
 		);
 	}
 
-	// Handle error state  
+	// Handle error state
 	if (error && !isProcessing) {
 		return (
-			<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+			<div className="min-h-screen" style={{ background: "var(--background)" }}>
+				<Header />
 				<div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
 					<div className="mb-8">
 						<Link
 							href="/preview"
-							className="inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+							className="inline-flex items-center hover:opacity-80 transition-opacity"
+							style={{ color: "var(--foreground)" }}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" />
 							Back to Invoice Preview
@@ -286,14 +299,14 @@ function ResultsContent() {
 					</div>
 
 					<div className="text-center">
-						<XCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-						<h1 className="text-2xl font-bold text-gray-900 mb-2">
+						<XCircle className="mx-auto h-16 w-16 mb-4" style={{ color: "var(--code-coral)" }} />
+						<h1 className="text-2xl font-bold mb-2" style={{ color: "var(--foreground)" }}>
 							Processing Failed
 						</h1>
-						<p className="text-gray-600 mb-4">{error}</p>
+						<p className="mb-4" style={{ color: "var(--foreground)", opacity: 0.8 }}>{error}</p>
 						<Link
 							href="/preview"
-							className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+							className="btn btn-primary inline-flex items-center"
 						>
 							Try Again
 						</Link>
@@ -319,12 +332,14 @@ function ResultsContent() {
 
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+		<div className="min-h-screen" style={{ background: "var(--background)" }}>
+			<Header />
 			<div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
 				<div className="mb-8">
 					<Link
 						href="/preview"
-						className="inline-flex items-center text-indigo-600 hover:text-indigo-700 transition-colors"
+						className="inline-flex items-center hover:opacity-80 transition-opacity"
+						style={{ color: "var(--foreground)" }}
 					>
 						<ArrowLeft className="mr-2 h-4 w-4" />
 						Back to Invoice Preview
@@ -332,20 +347,27 @@ function ResultsContent() {
 				</div>
 
 				<div className="text-center mb-8">
-					<h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+					<h1 className="text-3xl font-bold sm:text-4xl" style={{ color: "var(--foreground)" }}>
 						Invoice Processing Complete
 					</h1>
-					<p className="mt-2 text-lg text-gray-600">
+					<p className="mt-2 text-lg" style={{ color: "var(--foreground)", opacity: 0.8 }}>
 						{results?.summary?.totalInvoices || 0} invoices processed
 					</p>
-					<p className="mt-1 text-sm text-gray-500">
+					<p className="mt-1 text-sm" style={{ color: "var(--neutral)" }}>
 						AI-powered document classification and data extraction results
 					</p>
 				</div>
 
 				{/* Executive Summary */}
-				<div className="bg-white rounded-lg shadow-md p-5 mb-6">
-					<h2 className="text-xl font-semibold text-gray-900 mb-4">
+				<div
+					className="rounded-lg p-5 mb-6 border"
+					style={{
+						background: "var(--background)",
+						borderColor: "var(--neutral)",
+						boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+					}}
+				>
+					<h2 className="text-xl font-semibold mb-4" style={{ color: "var(--foreground)" }}>
 						Invoice Processing Summary
 					</h2>
 
@@ -387,29 +409,29 @@ function ResultsContent() {
 							
 							return (
 								<>
-									<div className="text-center p-2 bg-gray-50 rounded-lg">
-										<div className="text-lg font-bold text-indigo-600">
+									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
+										<div className="text-lg font-bold" style={{ color: "var(--disc-pink)" }}>
 											{successfulInvoices}/{totalInvoices}
 										</div>
-										<div className="text-xs text-gray-600">Processed Invoices</div>
+										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Processed Invoices</div>
 									</div>
-									<div className="text-center p-2 bg-gray-50 rounded-lg">
-										<div className="text-lg font-bold text-green-600">
+									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
+										<div className="text-lg font-bold" style={{ color: "var(--data-green)" }}>
 											{validFields}
 										</div>
-										<div className="text-xs text-gray-600">Valid Fields</div>
+										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Valid Fields</div>
 									</div>
-									<div className="text-center p-2 bg-gray-50 rounded-lg">
-										<div className="text-lg font-bold text-yellow-600">
+									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
+										<div className="text-lg font-bold" style={{ color: "var(--digital-pollen)" }}>
 											{needsReviewFields}
 										</div>
-										<div className="text-xs text-gray-600">Need Review</div>
+										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Need Review</div>
 									</div>
-									<div className="text-center p-2 bg-gray-50 rounded-lg">
-										<div className="text-lg font-bold text-red-600">
+									<div className="text-center p-2 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
+										<div className="text-lg font-bold" style={{ color: "var(--code-coral)" }}>
 											{missingFields}
 										</div>
-										<div className="text-xs text-gray-600">Missing Data</div>
+										<div className="text-xs" style={{ color: "var(--foreground)", opacity: 0.7 }}>Missing Data</div>
 									</div>
 								</>
 							);
@@ -417,57 +439,66 @@ function ResultsContent() {
 					</div>
 					
 					{/* Legend */}
-					<div className="mt-4 p-3 bg-gray-50 rounded-lg">
-						<h3 className="text-sm font-medium text-gray-900 mb-2">Field Status Legend</h3>
+					<div className="mt-4 p-3 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
+						<h3 className="text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Field Status Legend</h3>
 						<div className="flex flex-wrap gap-4 text-xs">
 							<div className="flex items-center space-x-2">
-								<div className="w-4 h-4 bg-green-500 border-2 border-green-600 rounded"></div>
-								<span className="text-gray-700">Data is validated</span>
+								<div className="w-4 h-4 rounded border-2" style={{ background: "var(--data-green)", borderColor: "var(--data-green)" }}></div>
+								<span style={{ color: "var(--foreground)", opacity: 0.8 }}>Data is validated</span>
 							</div>
 							<div className="flex items-center space-x-2">
-								<div className="w-4 h-4 bg-yellow-500 border-2 border-yellow-600 rounded"></div>
-								<span className="text-gray-700">Present but unable to be validated</span>
+								<div className="w-4 h-4 rounded border-2" style={{ background: "var(--digital-pollen)", borderColor: "var(--digital-pollen)" }}></div>
+								<span style={{ color: "var(--foreground)", opacity: 0.8 }}>Present but unable to be validated</span>
 							</div>
 							<div className="flex items-center space-x-2">
-								<div className="w-4 h-4 bg-red-500 border-2 border-red-600 rounded"></div>
-								<span className="text-gray-700">Missing</span>
+								<div className="w-4 h-4 rounded border-2" style={{ background: "var(--code-coral)", borderColor: "var(--code-coral)" }}></div>
+								<span style={{ color: "var(--foreground)", opacity: 0.8 }}>Missing</span>
 							</div>
 						</div>
 					</div>
 				</div>
 
 				{/* Compact Invoice Results */}
-				<div className="bg-white rounded-lg shadow-md mb-8">
-					<div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-						<h2 className="text-lg font-semibold text-gray-900">Invoice Data Extraction Results</h2>
-						<p className="text-sm text-gray-600 mt-1">Extracted information from each processed invoice</p>
+				<div
+					className="rounded-lg mb-8 border"
+					style={{
+						background: "var(--background)",
+						borderColor: "var(--neutral)",
+						boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+					}}
+				>
+					<div className="px-6 py-4 border-b" style={{ borderColor: "var(--neutral)" }}>
+						<h2 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>Invoice Data Extraction Results</h2>
+						<p className="text-sm mt-1" style={{ color: "var(--foreground)", opacity: 0.7 }}>Extracted information from each processed invoice</p>
 					</div>
 					<div className="p-6 space-y-4">
 						{results.invoices.map((invoice) => (
-							<div key={invoice.id} className="border rounded-lg p-4">
+							<div key={invoice.id} className="border rounded-lg p-4" style={{ borderColor: "var(--neutral)" }}>
 								<div className="flex items-center justify-between mb-3">
 									<div>
-										<h3 className="font-medium text-gray-900">{invoice.fileName}</h3>
+										<h3 className="font-medium" style={{ color: "var(--foreground)" }}>{invoice.fileName}</h3>
 										{invoice.detectedTemplate && (
-											<p className="text-xs text-blue-600">Template: {invoice.detectedTemplate}</p>
+											<p className="text-xs" style={{ color: "var(--disc-pink)" }}>Template: {invoice.detectedTemplate}</p>
 										)}
 									</div>
 									<span
-										className={`px-3 py-1 rounded-full text-xs font-medium ${
-											invoice.status === "completed" || invoice.status === "success"
-												? "bg-green-100 text-green-800"
-												: "bg-red-100 text-red-800"
-										}`}
+										className="px-3 py-1 rounded-full text-xs font-medium"
+										style={{
+											background: invoice.status === "completed" || invoice.status === "success"
+												? "var(--data-green-dark)"
+												: "var(--code-coral-dark)",
+											color: "var(--white)"
+										}}
 									>
 										{invoice.status === "completed" || invoice.status === "success" ? "Processed" : "Failed"}
 									</span>
 								</div>
-								
+
 								{invoice.error ? (
-									<div className="bg-red-50 border border-red-200 rounded p-3">
+									<div className="border rounded p-3" style={{ background: "var(--code-coral-dark)", borderColor: "var(--code-coral)" }}>
 										<div className="flex items-center">
-											<XCircle className="h-4 w-4 text-red-500 mr-2" />
-											<span className="text-sm text-red-700">{invoice.error}</span>
+											<XCircle className="h-4 w-4 mr-2" style={{ color: "var(--white)" }} />
+											<span className="text-sm" style={{ color: "var(--white)" }}>{invoice.error}</span>
 										</div>
 									</div>
 								) : invoice.fields && invoice.fields.length > 0 ? (
@@ -572,16 +603,27 @@ function ResultsContent() {
 														});
 													}
 													
-													const bgColor = validationState === 'Valid' 
-														? 'bg-green-100 text-green-800' 
-														: validationState === 'VerificationNeeded' || validationState === 'Undefined' 
-														? (hasValue ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800')
-														: hasValue 
-														? 'bg-yellow-100 text-yellow-800'  // Has value but unknown validation state
-														: 'bg-red-100 text-red-800';       // No value
-													
+													let bgColor: string, borderColor: string, textColor: string;
+													if (validationState === 'Valid') {
+														bgColor = 'var(--data-green)';
+														borderColor = 'var(--data-green)';
+														textColor = 'var(--black)';
+													} else if ((validationState === 'VerificationNeeded' || validationState === 'Undefined') && hasValue) {
+														bgColor = 'var(--digital-pollen)';
+														borderColor = 'var(--digital-pollen)';
+														textColor = 'var(--black)';
+													} else {
+														bgColor = 'var(--code-coral)';
+														borderColor = 'var(--code-coral)';
+														textColor = 'var(--white)';
+													}
+
 													return (
-														<div key={index} className={`px-2 py-1 rounded text-xs ${bgColor}`}>
+														<div
+															key={`${invoice.id}-${keyField.label}`}
+															className="px-2 py-1 rounded text-xs border-2"
+															style={{ background: bgColor, borderColor: borderColor, color: textColor }}
+														>
 															<div className="font-medium">{keyField.label}</div>
 															<div className="truncate" title={field?.value?.value || 'Missing'}>
 																{field?.value?.value || 'Missing'}
@@ -618,7 +660,7 @@ function ResultsContent() {
 											
 											return remainingFields.length > 0 && (
 											<details className="mt-2">
-												<summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-800">
+												<summary className="text-xs cursor-pointer" style={{ color: "var(--foreground)", opacity: 0.7 }}>
 													View additional {remainingFields.length} extracted fields
 												</summary>
 												<div className="mt-2 space-y-1">
@@ -626,17 +668,25 @@ function ResultsContent() {
 															// More flexible validation state checking
 															const validationState = field.validationState;
 															const hasValue = field.value?.value && field.value.value.trim() !== '';
-															
-															const bgColor = validationState === 'Valid' 
-																? 'bg-green-100 text-green-700' 
-																: validationState === 'VerificationNeeded' || validationState === 'Undefined' 
-																? (hasValue ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')
-																: hasValue 
-																? 'bg-yellow-100 text-yellow-700'  // Has value but unknown validation state
-																: 'bg-red-100 text-red-700';       // No value
-															
+
+															let bgColor: string, textColor: string;
+															if (validationState === 'Valid') {
+																bgColor = 'var(--data-green)';
+																textColor = 'var(--black)';
+															} else if ((validationState === 'VerificationNeeded' || validationState === 'Undefined') && hasValue) {
+																bgColor = 'var(--digital-pollen)';
+																textColor = 'var(--black)';
+															} else {
+																bgColor = 'var(--code-coral)';
+																textColor = 'var(--white)';
+															}
+
 															return (
-																<div key={field.fieldName} className={`px-3 py-2 rounded text-sm ${bgColor} flex justify-between items-start`}>
+																<div
+																	key={field.fieldName}
+																	className="px-3 py-2 rounded text-sm flex justify-between items-start"
+																	style={{ background: bgColor, color: textColor }}
+																>
 																	<div className="font-medium">{formatFieldName(field.fieldName)}:</div>
 																	<div className="ml-3 text-right flex-1">
 																		{field.value?.value || '—'}
@@ -650,7 +700,7 @@ function ResultsContent() {
 										})()}
 									</div>
 								) : (
-									<div className="text-center py-4 text-gray-500 text-sm">
+									<div className="text-center py-4 text-sm" style={{ color: "var(--neutral)" }}>
 										No data extracted from this invoice
 									</div>
 								)}
@@ -663,14 +713,14 @@ function ResultsContent() {
 				<div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
 					<Link
 						href="/preview"
-						className="inline-flex items-center px-6 py-3 border border-indigo-600 text-base font-medium rounded-lg text-indigo-600 bg-white hover:bg-indigo-50 transition-colors"
+						className="btn btn-secondary inline-flex items-center"
 					>
 						Process More Invoices
 					</Link>
 					<button
 						type="button"
 						onClick={() => setShowJsonModal(true)}
-						className="inline-flex items-center px-6 py-3 border border-indigo-600 text-base font-medium rounded-lg text-indigo-600 bg-white hover:bg-indigo-50 transition-colors"
+						className="btn btn-secondary inline-flex items-center"
 					>
 						<FileText className="mr-2 h-4 w-4" />
 						View JSON Results
@@ -688,7 +738,7 @@ function ResultsContent() {
 							a.click();
 							URL.revokeObjectURL(url);
 						}}
-						className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+						className="btn btn-primary inline-flex items-center"
 					>
 						<Download className="mr-2 h-4 w-4" />
 						Download JSON
@@ -697,10 +747,10 @@ function ResultsContent() {
 
 				{/* JSON Modal */}
 				{showJsonModal && (
-					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-						<div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-							<div className="flex items-center justify-between p-6 border-b border-gray-200">
-								<h2 className="text-xl font-semibold text-gray-900">Invoice Processing Results - JSON</h2>
+					<div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(0, 0, 0, 0.5)" }}>
+						<div className="rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col border" style={{ background: "var(--background)", borderColor: "var(--neutral)" }}>
+							<div className="flex items-center justify-between p-6 border-b" style={{ borderColor: "var(--neutral)" }}>
+								<h2 className="text-xl font-semibold" style={{ color: "var(--foreground)" }}>Invoice Processing Results - JSON</h2>
 								<div className="flex space-x-2">
 									<button
 										type="button"
@@ -708,29 +758,30 @@ function ResultsContent() {
 											navigator.clipboard.writeText(JSON.stringify(results, null, 2));
 											// You could add a toast notification here
 										}}
-										className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+										className="btn btn-secondary btn-sm"
 									>
 										Copy to Clipboard
 									</button>
 									<button
 										type="button"
 										onClick={() => setShowJsonModal(false)}
-										className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
+										className="p-2 rounded-md hover:opacity-70 transition-opacity"
+										style={{ color: "var(--neutral)" }}
 									>
 										<XCircle className="h-5 w-5" />
 									</button>
 								</div>
 							</div>
 							<div className="flex-1 overflow-auto p-6">
-								<pre className="bg-gray-50 rounded-lg p-4 text-sm font-mono whitespace-pre-wrap overflow-x-auto">
+								<pre className="json-content rounded-lg p-4 text-sm font-mono whitespace-pre-wrap overflow-x-auto" style={{ background: "var(--warm-gray-200)", color: "var(--foreground)" }}>
 									{JSON.stringify(results, null, 2)}
 								</pre>
 							</div>
-							<div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+							<div className="flex justify-end space-x-3 p-6 border-t" style={{ borderColor: "var(--neutral)" }}>
 								<button
 									type="button"
 									onClick={() => setShowJsonModal(false)}
-									className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+									className="btn btn-secondary"
 								>
 									Close
 								</button>
@@ -747,7 +798,7 @@ function ResultsContent() {
 										a.click();
 										URL.revokeObjectURL(url);
 									}}
-									className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+									className="btn btn-primary"
 								>
 									<Download className="inline h-4 w-4 mr-1" />
 									Download
@@ -757,7 +808,7 @@ function ResultsContent() {
 					</div>
 				)}
 
-				<div className="mt-8 text-center text-sm text-gray-500">
+				<div className="mt-8 text-center text-sm" style={{ color: "var(--neutral)" }}>
 					<p>
 						Nutrient AI Document Processing SDK • Processed at{" "}
 						{new Date(results.summary.timestamp).toLocaleString()}
@@ -772,15 +823,23 @@ export default function Results() {
 	return (
 		<Suspense
 			fallback={
-				<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+				<div className="min-h-screen" style={{ background: "var(--background)" }}>
+					<Header />
 					<div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-						<div className="bg-white rounded-lg shadow-md p-12">
+						<div
+							className="rounded-lg p-12 border"
+							style={{
+								background: "var(--background)",
+								borderColor: "var(--neutral)",
+								boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+							}}
+						>
 							<div className="text-center">
-								<RefreshCw className="h-12 w-12 text-indigo-600 animate-spin mx-auto mb-4" />
-								<h3 className="text-lg font-medium text-gray-900 mb-2">
+								<RefreshCw className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: "var(--disc-pink)" }} />
+								<h3 className="text-lg font-medium mb-2" style={{ color: "var(--foreground)" }}>
 									Loading Results
 								</h3>
-								<p className="text-gray-600">
+								<p style={{ color: "var(--foreground)", opacity: 0.8 }}>
 									Please wait while we load your processing results...
 								</p>
 							</div>
