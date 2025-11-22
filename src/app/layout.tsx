@@ -36,7 +36,16 @@ export default function RootLayout({
 			<body className="min-h-screen antialiased" suppressHydrationWarning>
 				{children}
 				{/* Load the script after page interactive to avoid blocking */}
-				<Script src={cdnUrl} strategy="afterInteractive" />
+				<Script
+					src={cdnUrl}
+					strategy="afterInteractive"
+					onError={(e) => {
+						console.error('❌ Failed to load Nutrient SDK:', e);
+					}}
+					onLoad={() => {
+						console.log('✅ Nutrient SDK loaded successfully');
+					}}
+				/>
 			</body>
 		</html>
 	);
