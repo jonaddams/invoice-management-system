@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Calendar, FileText, Receipt, Eye, File, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Eye, File, RefreshCw, HardDrive, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import type { InvoiceMetadata } from "@/types";
@@ -54,7 +54,7 @@ export default function PreviewInvoices() {
 					<h1 className="text-3xl font-bold sm:text-4xl" style={{ color: "var(--foreground)" }}>
 						Invoice Collection Preview
 					</h1>
-					<p className="mt-4 text-lg max-w-2xl mx-auto" style={{ color: "var(--foreground)", opacity: 0.8 }}>
+					<p className="mt-4 text-lg" style={{ color: "var(--foreground)", opacity: 0.8, textAlign: "center" }}>
 						{loading ? 'Loading invoices...' : error ? 'Error loading invoices' : `${invoices.length} invoice${invoices.length !== 1 ? 's' : ''} ready for AI processing`}
 					</p>
 				</div>
@@ -97,7 +97,7 @@ export default function PreviewInvoices() {
 							boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
 						}}
 					>
-						<Receipt className="mx-auto h-8 w-8 mb-2" style={{ color: "var(--digital-pollen)" }} />
+						<HardDrive className="mx-auto h-8 w-8 mb-2" style={{ color: "var(--digital-pollen)" }} />
 						<div className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>
 							{loading ? '...' : invoices.length > 0 ? Math.round(invoices.reduce((sum, inv) => sum + (inv.size || 0), 0) / 1024 / 1024 * 10) / 10 : 0}MB
 						</div>
@@ -111,7 +111,7 @@ export default function PreviewInvoices() {
 							boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
 						}}
 					>
-						<Calendar className="mx-auto h-8 w-8 mb-2" style={{ color: "var(--data-green)" }} />
+						<CheckCircle className="mx-auto h-8 w-8 mb-2" style={{ color: "var(--data-green)" }} />
 						<div className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>
 							{loading ? '...' : 'Ready'}
 						</div>

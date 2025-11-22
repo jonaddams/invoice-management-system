@@ -10,12 +10,12 @@ export default function Home() {
 
 			<div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
 				<div className="text-center">
-					<h1 className="text-4xl sm:text-5xl md:text-6xl mb-4" style={{ color: "var(--foreground)" }}>
-						<span className="block font-bold">AI Document Processing</span>
+					<h1 className="text-4xl sm:text-5xl md:text-6xl font-bold" style={{ color: "var(--foreground)", marginBottom: "1rem" }}>
+						AI Document Processing
 					</h1>
-					<p className="text-2xl sm:text-3xl mb-2 font-bold" style={{ color: "var(--foreground)", opacity: 0.7 }}>
+					<h3 className="text-3xl sm:text-3xl font-bold" style={{ color: "var(--foreground)", opacity: 0.7, marginBottom: "1.5rem" }}>
 						Invoice Management Demo
-					</p>
+					</h3>
 					<p className="mt-6 max-w-3xl mx-auto text-base sm:text-lg text-center" style={{ color: "var(--foreground)", opacity: 0.9 }}>
 						Experience AI-powered document classification and data extraction
 						for invoices. Process your invoice collection and watch as our

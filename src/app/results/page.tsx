@@ -1,5 +1,6 @@
 "use client";
 
+import Header from "@/components/Header";
 import {
 	ArrowLeft,
 	Download,
@@ -9,7 +10,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import Header from "@/components/Header";
 
 
 
@@ -124,6 +124,9 @@ function ResultsContent() {
 				addLog(`✅ Successfully processed ${doc}`);
 				await new Promise((resolve) => setTimeout(resolve, 500));
 			}
+
+			// Add finalizing message
+			addLog("⏳ Finalizing processing...");
 		},
 		[addLog],
 	);
@@ -183,6 +186,8 @@ function ResultsContent() {
 			}
 
 			addLog("🎉 Parallel processing completed");
+			addLog("⏳ Preparing results...");
+			await new Promise((resolve) => setTimeout(resolve, 300));
 
 			const data: ProcessingResult = await response.json();
 			console.log("✅ Processing completed:", data);
@@ -241,7 +246,7 @@ function ResultsContent() {
 							Processing Invoices
 						</h1>
 						<p className="mt-2 text-lg" style={{ color: "var(--foreground)", opacity: 0.8 }}>
-							AI is analyzing your invoice documents
+							Nutrient AI Document Processing is analyzing your invoice documents
 						</p>
 					</div>
 
@@ -360,17 +365,16 @@ function ResultsContent() {
 
 				{/* Executive Summary */}
 				<div
-					className="rounded-lg p-5 mb-6 border"
+					className="rounded-lg p-5 mb-8 border"
 					style={{
 						background: "var(--background)",
 						borderColor: "var(--neutral)",
 						boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
 					}}
 				>
-					<h2 className="text-xl font-semibold mb-4" style={{ color: "var(--foreground)" }}>
+					<h2 className="text-xl font-semibold" style={{ color: "var(--foreground)", marginBottom: "0.5rem" }}>
 						Invoice Processing Summary
 					</h2>
-
 
 					{/* Processing Statistics */}
 					<div className="grid md:grid-cols-4 gap-3">
@@ -440,7 +444,7 @@ function ResultsContent() {
 					
 					{/* Legend */}
 					<div className="mt-4 p-3 rounded-lg" style={{ background: "var(--warm-gray-200)" }}>
-						<h3 className="text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Field Status Legend</h3>
+						<h3 className="text-sm font-medium" style={{ color: "var(--foreground)", marginBottom: "0.25rem" }}>Field Status Legend</h3>
 						<div className="flex flex-wrap gap-4 text-xs">
 							<div className="flex items-center space-x-2">
 								<div className="w-4 h-4 rounded border-2" style={{ background: "var(--data-green)", borderColor: "var(--data-green)" }}></div>
