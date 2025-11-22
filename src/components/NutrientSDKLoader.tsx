@@ -5,7 +5,8 @@ import { useEffect } from "react";
 export default function NutrientSDKLoader() {
 	useEffect(() => {
 		const webSDKVersion = process.env.NEXT_PUBLIC_WEB_SDK_VERSION || "1.9.0";
-		const cdnUrl = `https://cdn.cloud.pspdfkit.com/pspdfkit-web@${webSDKVersion}/nutrient-viewer.js`;
+		// Try the alternative CDN URL format
+		const cdnUrl = `https://cdn.cloud.nutrient.io/[email protected]/pspdfkit.js`;
 
 		// Check if already loaded
 		if (typeof window !== "undefined" && (window as any).NutrientViewer) {
@@ -13,18 +14,19 @@ export default function NutrientSDKLoader() {
 			return;
 		}
 
+		console.log(`🔄 Loading Nutrient SDK from: ${cdnUrl}`);
+
 		// Create script element
 		const script = document.createElement("script");
 		script.src = cdnUrl;
 		script.async = true;
-		script.crossOrigin = "anonymous";
 
 		script.onload = () => {
-			console.log("✅ Nutrient SDK loaded successfully");
+			console.log("✅ Nutrient SDK loaded successfully from alternative CDN");
 		};
 
-		script.onerror = () => {
-			console.error("❌ Failed to load Nutrient SDK");
+		script.onerror = (error) => {
+			console.error("❌ Failed to load Nutrient SDK from alternative CDN:", error);
 		};
 
 		document.head.appendChild(script);
