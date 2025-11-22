@@ -4,8 +4,8 @@ import { useEffect } from "react";
 
 export default function NutrientSDKLoader() {
 	useEffect(() => {
-		// Hardcoded URL for testing
-		const cdnUrl = "https://cdn.cloud.pspdfkit.com/pspdfkit-web@1.9.1/nutrient-viewer.js";
+		const webSDKVersion = process.env.NEXT_PUBLIC_WEB_SDK_VERSION || "1.9.1";
+		const cdnUrl = `https://cdn.cloud.pspdfkit.com/pspdfkit-web@${webSDKVersion}/nutrient-viewer.js`;
 
 		// Check if already loaded
 		if (typeof window !== "undefined" && (window as any).NutrientViewer) {
@@ -13,7 +13,7 @@ export default function NutrientSDKLoader() {
 			return;
 		}
 
-		console.log(`🔄 Attempting to load Nutrient SDK from: ${cdnUrl}`);
+		console.log(`🔄 Attempting to load Nutrient SDK v${webSDKVersion} from: ${cdnUrl}`);
 
 		// Create script element
 		const script = document.createElement("script");
