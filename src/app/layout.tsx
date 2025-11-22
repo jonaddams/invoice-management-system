@@ -39,12 +39,6 @@ export default function RootLayout({
 				<Script
 					src={cdnUrl}
 					strategy="lazyOnload"
-					onError={(e) => {
-						console.error('❌ Failed to load Nutrient SDK:', e);
-					}}
-					onLoad={() => {
-						console.log('✅ Nutrient SDK loaded successfully');
-					}}
 				/>
 			</body>
 		</html>
