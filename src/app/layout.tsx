@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
 import ThemeScript from "@/components/ThemeScript";
 import "./globals.css";
@@ -32,14 +31,11 @@ export default function RootLayout({
 				/>
 				{/* Prevent flash of unstyled content */}
 				<ThemeScript />
+				{/* Load Nutrient SDK using standard script tag to avoid ORB issues */}
+				<script src={cdnUrl} async></script>
 			</head>
 			<body className="min-h-screen antialiased" suppressHydrationWarning>
 				{children}
-				{/* Load the script after page interactive to avoid blocking */}
-				<Script
-					src={cdnUrl}
-					strategy="lazyOnload"
-				/>
 			</body>
 		</html>
 	);
