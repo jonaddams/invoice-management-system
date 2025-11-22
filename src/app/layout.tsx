@@ -38,7 +38,7 @@ export default function RootLayout({
 				{/* Load the script after page interactive to avoid blocking */}
 				<Script
 					src={cdnUrl}
-					strategy="afterInteractive"
+					strategy="lazyOnload"
 					onError={(e) => {
 						console.error('❌ Failed to load Nutrient SDK:', e);
 					}}
